@@ -3,13 +3,23 @@ package com.example.webapitest.repository
 import com.example.webapitest.model.User
 import com.example.webapitest.repository.db.UserEntity
 import com.example.webapitest.repository.db.toUser
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.stereotype.Repository
 
 @Repository
 class UserRepository {
 
-    fun getByOrNull(id: Long): User? {
-        return UserEntity.findById(id)?.toUser()
+    fun getByOrNull(id: Long): User? = transaction {
+        return@transaction UserEntity.findById(id)?.toUser()
+    }
+
+    fun getBy(page: Int, pageSize: Int): List<User> {
+        val offset = page * pageSize
+        return transaction {
+            UserEntity.all()
+                    .limit(pageSize, offset.toLong())
+                    .map { it.toUser() }
+        }
     }
 
     fun list(): List<User> {
